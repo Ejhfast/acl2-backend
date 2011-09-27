@@ -1,5 +1,6 @@
 ; Substitution functions
 (mutual-recursion
+  ; Using the associations in alist, makes the appropriate substitutions in every element in list l.
   (defun my-sublis-var-lst (alist l)
     (declare (xargs :measure (acl2-count l)
                     :guard (and (symbol-alistp alist)
@@ -9,6 +10,7 @@
       (let ((subbed (my-sublis-var alist (car l))))
         (append subbed (my-sublis-var-lst alist (cdr l))))))
 
+  ; Using the associations in alist, makes the appropriate substitutions in form.
   (defun my-sublis-var (alist form)
     (declare (xargs :measure (acl2-count form)
                     :guard (and (symbol-alistp alist)
