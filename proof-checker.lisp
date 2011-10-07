@@ -433,12 +433,14 @@
   (defun prove-tree-useforproof (output-file assumptions rules to-prove-list depth)
     (let* ((first-to-prove (first to-prove-list))
            (processed-first (prove-tree output-file assumptions rules first-to-prove depth)))
-      (if (or (equal (len to-prove-list) 1) (null processed-first))
-        (list processed-first)
-        (let ((processed-rest (prove-tree-useforproof output-file assumptions rules (cdr to-prove-list) depth)))
-          (if (null processed-rest)
-            nil
-            (cons processed-first processed-rest)))))))
+      (if (null processed-first)
+        nil
+        (if (equal (len to-prove-list) 1)
+          (list processed-first)
+          (let ((processed-rest (prove-tree-useforproof output-file assumptions rules (cdr to-prove-list) depth)))
+            (if (null processed-rest)
+              nil
+              (cons processed-first processed-rest))))))))
 
 ; Returns (mv nil nil) if it does not, (mv T proof-path) if it does
 (mutual-recursion
@@ -497,7 +499,7 @@
                 (mv nil nil))))))
 
 (defun prove-tree-base (output-file assumptions rules to-prove depth)
-;  (prog2$ (my-cw output-file "Searching down one more level...~%") ; Uncomment and add a match parentheses if you want to see progress with search
+;  (prog2$ (my-cw output-file "Searching one more level down... in ~x0~%" to-prove) ; Uncomment and add a match parentheses if you want to see progress with search
   (let ((processed-tree (prove-tree output-file assumptions rules to-prove depth)))
     (if (null processed-tree)
       (mv nil nil)
