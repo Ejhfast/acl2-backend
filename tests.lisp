@@ -30,12 +30,12 @@
     (step4 (= (g (f a) b) (g (f c) a)) gcong ((x (f a)) (z b) (y (f c)) (w a)) (step2 step3))))
 (defun prove1 ()
   (prog2$
-    (my-cw (output-file) "Running prove1...~%")
+    (my-cw (output-file) "RUNNING: prove1...~%")
     (proof-check (output-file) (assumptions1) (rules1) (proof1) nil '(r s a) 0)))
 
 (defun prove1-goal ()
   (prog2$
-    (my-cw (output-file) "Running prove1-goal...~%")
+    (my-cw (output-file) "RUNNING: prove1-goal...~%")
     (verify-proof (output-file) '(= (g (f a) b) (g (f c) a)) (assumptions1) (rules1) (proof1) nil '(r s a) 0)))
 
 ; Note that this proves 3 intermediate statements with depth 2, since they are not nested in series
@@ -43,7 +43,7 @@
   '((step4 (= (g (f a) b) (g (f c) a)) nil nil nil)))
 (defun prove1-auto ()
   (prog2$
-    (my-cw (output-file) "Running prove1-auto...~%")
+    (my-cw (output-file) "RUNNING: prove1-auto...~%")
     (proof-check (output-file) (assumptions1) (rules1) (proof1-auto) nil nil 2)))
 
 ; Problem: Prove a * (b - b) = 0
@@ -59,14 +59,14 @@
     (step3 (= (* a (- b b)) 0) nil nil nil)))
 (defun prove2 ()
   (prog2$
-    (my-cw (output-file) "Running prove2...~%")
+    (my-cw (output-file) "RUNNING: prove2...~%")
     (proof-check (output-file) nil (rules2) (proof2) nil nil 0)))
 
 (defun proof2-auto ()
   '((step3 (= (* a (- b b)) 0) nil nil nil)))
 (defun prove2-auto ()
   (prog2$
-    (my-cw (output-file) "Running prove2-auto...~%")
+    (my-cw (output-file) "RUNNING: prove2-auto...~%")
     (proof-check (output-file) nil (rules2) (proof2-auto) nil nil 2)))
 
 ; Tests proofs with no assumptions
@@ -76,7 +76,7 @@
   '((step1 (= (f) (g)) nil nil nil)))
 (defun prove3 ()
   (prog2$
-    (my-cw (output-file) "Running prove3...~%")
+    (my-cw (output-file) "RUNNING: prove3...~%")
     (proof-check (output-file) nil (rules3) (proof3) nil nil 0)))
 
 ; Tests that only variables are substituted, not function names
@@ -86,7 +86,7 @@
   '((step1 (a b b) test nil nil)))
 (defun prove4 ()
   (prog2$
-    (my-cw (output-file) "Running prove4...~%")
+    (my-cw (output-file) "RUNNING: prove4...~%")
     (proof-check (output-file) nil (rules4) (proof4) nil nil 0)))
 
 ; GRAMMAR TESTS
@@ -104,7 +104,7 @@
     (step4 (isBal [ [ [ ] [ ] ] ]) nil nil nil)))
 (defun prove5 ()
   (prog2$
-    (my-cw (output-file) "Running prove5...~%")
+    (my-cw (output-file) "RUNNING: prove5...~%")
     (proof-check (output-file) (assumptions5) (rules5) (proof5) '([ ]) nil 0)))
 
 ; Balanced brackets (CURRENT format)
@@ -126,7 +126,7 @@
     (7 (-*> B [ [ [ ] [ ] ] ]) nil nil nil)))
 (defun prove5b ()
   (prog2$
-    (my-cw (output-file) "Running prove5b...~%")
+    (my-cw (output-file) "RUNNING: prove5b...~%")
     (proof-check (output-file) (assumptions5b) (rules5b) (proof5b) '(B [ ]) nil 0)))
 
 (defun proof5b-auto ()
@@ -134,7 +134,7 @@
      (7 (-*> B [ [ [ ] [ ] ] ]) nil nil nil)))
 (defun prove5b-auto ()
   (prog2$
-    (my-cw (output-file) "Running prove5b-auto... (should be a few seconds)~%")
+    (my-cw (output-file) "RUNNING: prove5b-auto... (should be a few seconds)~%")
     (proof-check (output-file) (assumptions5b) (rules5b) (proof5b-auto) '(B [ ]) nil 3)))
 
 ; TODO This test is disabled because it uses recursion depth 6, which is currently too much for the
@@ -143,7 +143,7 @@
   '((7 (-*> B [ [ [ ] [ ] ] ]) nil nil nil)))
 (defun prove5b-auto-full ()
   (prog2$
-    (my-cw (output-file) "Running prove5b-auto-full...~%")
+    (my-cw (output-file) "RUNNING: prove5b-auto-full...~%")
     (proof-check (output-file) (assumptions5b) (rules5b) (proof5b-auto) '(B [ ]) nil 6)))
 
 ; Simple CFG (old format) - example from CS 143 WA2, #2
@@ -171,7 +171,7 @@
     (step6 (isS x l v i i) nil nil nil)))
 (defun prove6 ()
   (prog2$
-    (my-cw (output-file) "Running prove6...~%")
+    (my-cw (output-file) "RUNNING: prove6...~%")
     (proof-check (output-file) nil (rules6) (proof6) '(c l x v i) nil 0)))
 
 ; Simple CFG (current format) - example from CS 143 WA2, #2
@@ -202,7 +202,7 @@
     (6 (-*> S _x _l _v _i _i) nil nil nil)))
 (defun prove6b ()
   (prog2$
-    (my-cw (output-file) "Running prove6b...~%")
+    (my-cw (output-file) "RUNNING: prove6b...~%")
     (proof-check (output-file) (assumptions6b) (rules6b) (proof6b) '(S T X U Y I _x _l _c _v _i) nil 0)))
 
 (defun rules6b-auto ()
@@ -217,7 +217,7 @@
     (6 (-*> S _x _l _v _i _i) nil nil nil)))
 (defun prove6b-auto ()
   (prog2$
-    (my-cw (output-file) "Running prove6b-auto... (should be about half a minute) ~%")
+    (my-cw (output-file) "RUNNING: prove6b-auto... (should be about half a minute) ~%")
     (proof-check (output-file) (assumptions6b) (rules6b-auto) (proof6b-auto) '(S T X U Y I _x _l _c _v _i) nil 3)))
 
 ; TODO This test is disabled because it uses recursion depth 5, which is currently too much for the
@@ -226,7 +226,7 @@
   '((6 (-*> S _x _l _v _i _i) nil nil nil)))
 (defun prove6b-auto-full ()
   (prog2$
-    (my-cw (output-file) "Running prove6b-auto-full...~%")
+    (my-cw (output-file) "RUNNING: prove6b-auto-full...~%")
     (proof-check (output-file) (assumptions6b) (rules6b-auto) (proof6b-auto-full) '(S T X U Y I _x _l _c _v _i) nil 5)))
 
 ; Context-sensitive grammars (current format) - first example from Wikipedia
@@ -264,7 +264,7 @@
     (18 (-*> S _a _a _a _b _b _b _c _c _c) nil nil nil)))
 (defun prove7 ()
   (prog2$
-    (my-cw (output-file) "Running prove7...~%")
+    (my-cw (output-file) "RUNNING: prove7...~%")
     (proof-check (output-file) (assumptions7) (rules7) (proof7) '(S B C H _a _b _c -) nil 0)))
 
 ; Context-sensitive grammars (current format) - second example from Wikipedia
@@ -292,7 +292,7 @@
     (7 (-*> S _a _b _a _b) nil nil nil)))
 (defun prove8 ()
   (prog2$
-    (my-cw (output-file) "Running prove8...~%")
+    (my-cw (output-file) "RUNNING: prove8...~%")
     (proof-check (output-file) (assumptions8) (rules8) (proof8) '(S A B T _a _b -) nil 0)))
 
 ; Tests that substitutions obey format restrictions
@@ -304,7 +304,7 @@
     (2 (isString "abc") nil nil nil)))
 (defun prove9 ()
   (prog2$
-    (my-cw (output-file) "Running prove9...~%")
+    (my-cw (output-file) "RUNNING: prove9...~%")
     (proof-check (output-file) nil (rules9) (proof9) nil nil 0)))
 
 ; COOL - Prove some things about the types of various expressions
@@ -376,7 +376,7 @@
     (8 (turns (env (obj y Int)) let x colon String <- "blah" in if true then x else 4 + y fi hasType Object) nil nil nil)))
 (defun prove10 ()
   (prog2$
-    (my-cw (output-file) "Running prove10...~%")
+    (my-cw (output-file) "RUNNING: prove10...~%")
     (proof-check (output-file) (assumptions10) (rules10) (proof10) '(Object abort type_name IO in_string in_int Int Bool String length concat substr true false <- colon comma dot op cp hasType if then else fi let in +) nil 0)))
 
 ; Tests that the proof-checker can correctly unify ((a b) a) with ((x y) x), where both a and b are
@@ -388,7 +388,7 @@
   '((1 (list (list x y) x) nil nil nil)))
 (defun prove11 ()
   (prog2$
-    (my-cw (output-file) "Running prove11...~%")
+    (my-cw (output-file) "RUNNINGRUNNING: prove11...~%")
     (proof-check (output-file) nil (rules11) (proof11) nil nil 0)))
 
 ; Ensures that backtracking will work during assumptions as well. The proof-checker should unify
@@ -404,7 +404,7 @@
   '((1 (list x) nil nil nil)))
 (defun prove12 ()
   (prog2$
-    (my-cw (output-file) "Running prove12...~%")
+    (my-cw (output-file) "RUNNINGRUNNING: prove12...~%")
     (proof-check (output-file) (assumptions12) (rules12) (proof12) nil nil 0)))
 
 ; Basic proof
@@ -418,7 +418,7 @@
     (2 (= (f b) (f a)) nil nil nil)))
 (defun prove13 ()
   (prog2$
-    (my-cw (output-file) "Running prove13...~%")
+    (my-cw (output-file) "RUNNING: prove13...~%")
     (proof-check (output-file) (assumptions13) (rules13) (proof13) nil nil 0)))
 
 ; Same as basic proof, but now using search to avoid stating step 1
@@ -426,13 +426,13 @@
   '((1 (= (f b) (f a)) nil nil nil)))
 (defun prove13-auto ()
   (prog2$
-    (my-cw (output-file) "Running prove13-auto...~%")
+    (my-cw (output-file) "RUNNING: prove13-auto...~%")
     (proof-check (output-file) (assumptions13) (rules13) (proof13-auto) nil nil 1)))
 
 ; Actually going to depth 100000 would be bad, solution should be found before that
 (defun prove13-auto2 ()
   (prog2$
-    (my-cw (output-file) "Running prove13-auto2...~%")
+    (my-cw (output-file) "RUNNING: prove13-auto2...~%")
     (proof-check (output-file) (assumptions13) (rules13) (proof13-auto) nil nil 100000)))
 
 (defun rules14 ()
@@ -453,7 +453,7 @@
     (6 (= (+ (+ 1 2) (+ 1 2)) 6) =trans nil nil)))
 (defun prove14 ()
   (prog2$
-    (my-cw (output-file) "Running prove14...~%")
+    (my-cw (output-file) "RUNNING: prove14...~%")
     (proof-check (output-file) (assumptions14) (rules14) (proof14) nil nil 0)))
 
 (defun proof14-auto ()
@@ -463,15 +463,40 @@
     (4 (= (+ (+ 1 2) (+ 1 2)) 6) nil nil nil)))
 (defun prove14-auto ()
   (prog2$
-    (my-cw (output-file) "Running prove14-auto...~%")
+    (my-cw (output-file) "RUNNING: prove14-auto...~%")
     (proof-check (output-file) (assumptions14) (rules14) (proof14-auto) nil nil 1)))
 
 (defun proof15-auto ()
   '((1 (= (+ (+ 1 2) (+ 3 (+ 1 2))) (+ (+ 1 2) (+ 3 3))) nil nil nil)))
 (defun prove15-auto ()
   (prog2$
-    (my-cw (output-file) "Running prove15-auto...~%")
+    (my-cw (output-file) "RUNNING: prove15-auto...~%")
     (proof-check (output-file) (assumptions14) (rules14) (proof15-auto) nil nil 1)))
+
+(defun rules16 ()
+  '((R1 (=> (~ (~ P)) P))
+    (R2 (implies (=> P R) (=> (OR P Q) (OR R Q))))
+    (R3 (implies (=> Q P) (=> (~ P) (~ Q))))
+    (R4 (implies (and (=> P Q) P) Q))))
+(defun assumptions16 ()
+  '((A1 (~ (OR D (~ E))))))
+(defun proof16 ()
+  '((P1 (=> (~ (~ D)) D) nil nil nil)
+    (P2 (=> (OR (~ (~ D)) (~ E)) (OR D (~ E))) nil nil nil)
+    (P3 (=> (~ (OR D (~ E))) (~ (OR (~ (~ D)) (~ E)))) nil nil nil)
+    (P4 (~ (OR (~ (~ D)) (~ E))) nil nil nil)))
+(defun prove16 ()
+  (prog2$
+    (my-cw (output-file) "RUNNING: prove16...~%")
+    (proof-check (output-file) (assumptions16) (rules16) (proof16) nil nil 0)))
+
+(defun proof16-auto ()
+  '((P3 (=> (~ (OR D (~ E))) (~ (OR (~ (~ D)) (~ E)))) nil nil nil)
+    (P4 (~ (OR (~ (~ D)) (~ E))) nil nil nil)))
+(defun prove16-auto ()
+  (prog2$
+    (my-cw (output-file) "RUNNING: prove16-auto...~%")
+    (proof-check (output-file) (assumptions16) (rules16) (proof16-auto) nil nil 2)))
 
 ;;;;;;;;;;;;;;;;;;
 ;;; BAD PROOFS ;;;
@@ -481,14 +506,14 @@
   '((step1 (= b b) =refl (x b) nil)))
 (defun badalist-prove ()
   (prog2$
-    (my-cw (output-file) "Running badalist-prove: should fail with bad association list.~%")
+    (my-cw (output-file) "RUNNING: badalist-prove: should fail with bad association list.~%")
     (proof-check (output-file) nil (rules2) (badalistp) nil nil 0)))
 
 (defun badalist2p ()
   '((step1 (= b b) =refl (((x b) c)) nil)))
 (defun badalist2-prove ()
   (prog2$
-    (my-cw (output-file) "Running badalist2-prove: should fail with non-atom mapping.~%")
+    (my-cw (output-file) "RUNNING: badalist2-prove: should fail with non-atom mapping.~%")
     (proof-check (output-file) nil (rules2) (badalist2p) nil nil 0)))
 
 (defun dupnamesa ()
@@ -498,7 +523,7 @@
   '((step1 (equiv x y) assump ((a x) (b y)) nil)))
 (defun dupnames-prove ()
   (prog2$
-    (my-cw (output-file) "Running dupnames-prove: should fail with duplicate names.~%")
+    (my-cw (output-file) "RUNNING: dupnames-prove: should fail with duplicate names.~%")
     (proof-check (output-file) (dupnamesa) nil (dupnamesp) nil nil 0)))
 
 ; TODO Needs consistency - this will succeed if the substitution is allowed
@@ -508,42 +533,42 @@
   '((1 (= x x) =refl ((+ x)) nil)))
 (defun forbiddensub-prove ()
   (prog2$
-    (my-cw (output-file) "Running forbiddensub-prove: should fail with forbidden name +.~%")
+    (my-cw (output-file) "RUNNING: forbiddensub-prove: should fail with forbidden name +.~%")
     (proof-check (output-file) nil (forbiddensubr) (forbiddensubp) nil nil 0)))
 
 (defun nummapp ()
   '((pf (= b b) =refl ((1 b)) nil)))
 (defun nummap-prove ()
   (prog2$
-    (my-cw (output-file) "Running nummap-prove: should fail with mapping to number.~%")
+    (my-cw (output-file) "RUNNING: nummap-prove: should fail with mapping to number.~%")
     (proof-check (output-file) nil (rules2) (nummapp) nil nil 0)))
 
 (defun badruleslen1r ()
   '((blah)))
 (defun badruleslen1-prove ()
   (prog2$
-    (my-cw (output-file) "Running badruleslen1r-prove: should fail with bad length.~%")
+    (my-cw (output-file) "RUNNING: badruleslen1r-prove: should fail with bad length.~%")
     (proof-check (output-file) nil (badruleslen1r) nil nil nil 0)))
 
 (defun badruleslen2r ()
   '((blah (= x x) nil nil nil)))
 (defun badruleslen2-prove ()
   (prog2$
-    (my-cw (output-file) "Running badruleslen2r-prove: should fail with bad length.~%")
+    (my-cw (output-file) "RUNNING: badruleslen2r-prove: should fail with bad length.~%")
     (proof-check (output-file) nil (badruleslen2r) nil nil nil 0)))
 
 (defun badassumplena ()
   '((assump = a b)))
 (defun badassumplena-prove ()
   (prog2$
-    (my-cw (output-file) "Running badassumplena-prove: should fail with bad length.~%")
+    (my-cw (output-file) "RUNNING: badassumplena-prove: should fail with bad length.~%")
     (proof-check (output-file) (badassumplena) (rules2) (proof2) nil nil 0)))
 
 (defun badassumpstmta ()
   '((assump ((= a b)))))
 (defun badassumpstmt-prove ()
   (prog2$
-    (my-cw (output-file) "Running badassumpstmt-prove: should fail with malformed expression.~%")
+    (my-cw (output-file) "RUNNING: badassumpstmt-prove: should fail with malformed expression.~%")
     (proof-check (output-file) (badassumpstmta) (rules2) (proof2) nil nil 0)))
 
 (defun defconstr ()
@@ -552,7 +577,7 @@
   '((step1 (= y y) withconst ((x y)) nil)))
 (defun defconst-prove ()
   (prog2$
-    (my-cw (output-file) "Running defconst-prove: should fail with forbidden name error.~%")
+    (my-cw (output-file) "RUNNING: defconst-prove: should fail with forbidden name error.~%")
     (proof-check (output-file) nil (defconstr) (defconstp) '(x) nil 0)))
 
 (defun atomkeyr ()
@@ -561,49 +586,49 @@
   '((1 (= y y) (rule name) ((x y)) nil)))
 (defun atomkey-prove ()
   (prog2$
-    (my-cw (output-file) "Running atomkey-prove: should fail with non-atom key errors in both rule and proof.~%")
+    (my-cw (output-file) "RUNNING: atomkey-prove: should fail with non-atom key errors in both rule and proof.~%")
     (proof-check (output-file) nil (atomkeyr) (atomkeyp) nil nil 0)))
 
 (defun missingassumpp ()
   '((1 (= a b) =symm nil nil)))
 (defun missingassump-prove ()
   (prog2$
-    (my-cw (output-file) "Running missingassump-prove: should fail to prove step 1.~%")
+    (my-cw (output-file) "RUNNING: missingassump-prove: should fail to prove step 1.~%")
     (proof-check (output-file) nil (rules1) (missingassumpp) nil nil 0)))
 
 (defun badstrvarsr ()
   '((badrule (= x 0) (0))))
 (defun badstrvars-prove ()
   (prog2$
-    (my-cw (output-file) "Running badstrvars-prove: should say str-vars contains constants.~%")
+    (my-cw (output-file) "RUNNING: badstrvars-prove: should say str-vars contains constants.~%")
     (proof-check (output-file) nil (badstrvarsr) nil nil nil 0)))
 
 (defun badstrvars2r ()
   '((badrule (= x 0) (a (b c)))))
 (defun badstrvars2-prove ()
   (prog2$
-    (my-cw (output-file) "Running badstrvars2-prove: should say str-vars contains constants.~%")
+    (my-cw (output-file) "RUNNING: badstrvars2-prove: should say str-vars contains constants.~%")
     (proof-check (output-file) nil (badstrvars2r) nil nil nil 0)))
 
 (defun nomatchp ()
   '((1 (-*> B [ x_b) prod nil nil)))
 (defun nomatch-prove ()
   (prog2$
-    (my-cw (output-file) "Running nomatch-prove: should fail to prove step 1.~%")
+    (my-cw (output-file) "RUNNING: nomatch-prove: should fail to prove step 1.~%")
     (proof-check (output-file) (assumptions5b) (rules5b) (nomatchp) '(B [ ] x_b) nil 0)))
 
 (defun nomatch2p ()
   '((1 (-*> B [ x_b ] ]) prod nil nil)))
 (defun nomatch2-prove ()
   (prog2$
-    (my-cw (output-file) "Running nomatch2-prove: should fail to prove step 1.~%")
+    (my-cw (output-file) "RUNNING: nomatch2-prove: should fail to prove step 1.~%")
     (proof-check (output-file) (assumptions5b) (rules5b) (nomatch2p) '(B [ ] x_b) nil 0)))
 
 (defun nomatch3p ()
   '((1 (-*> B [ x_b x_b ]) prod nil nil)))
 (defun nomatch3-prove ()
   (prog2$
-    (my-cw (output-file) "Running nomatch3-prove: should fail to prove step 1.~%")
+    (my-cw (output-file) "RUNNING: nomatch3-prove: should fail to prove step 1.~%")
     (proof-check (output-file) (assumptions5b) (rules5b) (nomatch3p) '(B [ ] x_b) nil 0)))
 
 (defun badsublenr ()
@@ -612,63 +637,63 @@
   '((1 (f) rule ((x)) nil)))
 (defun badsublen-prove ()
   (prog2$
-    (my-cw (output-file) "Running badsublen-prove: should report bad substitution.~%")
+    (my-cw (output-file) "RUNNING: badsublen-prove: should report bad substitution.~%")
     (proof-check (output-file) nil (badsublenr) (badsublenp) nil nil 0)))
 
 (defun badsublen2p ()
   '((1 (f a b) rule ((x a b)) nil)))
 (defun badsublen2-prove ()
   (prog2$
-    (my-cw (output-file) "Running badsublen2-prove: should report bad substitution.~%")
+    (my-cw (output-file) "RUNNING: badsublen2-prove: should report bad substitution.~%")
     (proof-check (output-file) nil (badsublenr) (badsublen2p) nil nil 0)))
 
 (defun badmatchlenp ()
   '((1 (f) rule nil nil)))
 (defun badmatchlen-prove ()
   (prog2$
-    (my-cw (output-file) "Running badmatchlen-prove: should fail to prove step 1.~%")
+    (my-cw (output-file) "RUNNING: badmatchlen-prove: should fail to prove step 1.~%")
     (proof-check (output-file) nil (badsublenr) (badmatchlenp) nil nil 0)))
 
 (defun badmatchlen2p ()
   '((1 (f a b) rule nil nil)))
 (defun badmatchlen2-prove ()
   (prog2$
-    (my-cw (output-file) "Running badmatchlen2-prove: should fail to prove step 1.~%")
+    (my-cw (output-file) "RUNNING: badmatchlen2-prove: should fail to prove step 1.~%")
     (proof-check (output-file) nil (badsublenr) (badmatchlen2p) nil nil 0)))
 
 (defun badsubsp ()
   '((1 (= a a) =refl ((x b) (x a)) nil)))
 (defun badsubs-prove ()
   (prog2$
-    (my-cw (output-file) "Running badsubs-prove: should report bad substitutions (not just proof failure!).~%")
+    (my-cw (output-file) "RUNNING: badsubs-prove: should report bad substitutions (not just proof failure!).~%")
     (proof-check (output-file) nil (rules1) (badsubsp) nil nil 0)))
 
 (defun nosamematchp ()
   '((1 (= a b) =refl nil nil)))
 (defun nosamematch-prove ()
   (prog2$
-    (my-cw (output-file) "Running nosamematch-prove: should fail to prove step 1.~%")
+    (my-cw (output-file) "RUNNING: nosamematch-prove: should fail to prove step 1.~%")
     (proof-check (output-file) nil (rules1) (nosamematchp) nil nil 0)))
 
 (defun notanumberp ()
   '((1 (= (* a 0) 0) nil nil nil)))
 (defun notanumber-prove ()
   (prog2$
-    (my-cw (output-file) "Running notanumber-prove: should say a is not a number.~%")
+    (my-cw (output-file) "RUNNING: notanumber-prove: should say a is not a number.~%")
     (proof-check (output-file) nil (rules9) (notanumberp) nil nil 0)))
 
 (defun notastringp ()
   '((1 (isString xyz) nil nil nil)))
 (defun notastring-prove ()
   (prog2$
-    (my-cw (output-file) "Running notastring-prove: should say xyz is not a string.~%")
+    (my-cw (output-file) "RUNNING: notastring-prove: should say xyz is not a string.~%")
     (proof-check (output-file) nil (rules9) (notastringp) nil nil 0)))
 
 (defun nosearchp ()
   '((2 (-*> B [ [ B ] ]) nil nil nil)))
 (defun nosearch-prove ()
   (prog2$
-    (my-cw (output-file) "Running nosearch-prove: should fail without mentioning recursion depth.~%")
+    (my-cw (output-file) "RUNNING: nosearch-prove: should fail without mentioning recursion depth.~%")
     (proof-check (output-file) (assumptions5b) (rules5b) (nosearchp) '(B [ ]) nil 0)))
 
 (defun insufficientdepthp ()
@@ -676,12 +701,12 @@
     (7 (-*> B [ [ [ ] [ ] ] ]) nil nil nil)))
 (defun insufficientdepth-prove ()
   (prog2$
-    (my-cw (output-file) "Running insufficientdepth-prove: should fail with recursion depth 2.~%")
+    (my-cw (output-file) "RUNNING: insufficientdepth-prove: should fail with recursion depth 2.~%")
     (proof-check (output-file) (assumptions5b) (rules5b) (insufficientdepthp) '(B [ ]) nil 2)))
 
 (defun missedgoal-prove ()
   (prog2$
-    (my-cw (output-file) "Running missedgoal-prove: should say proof was successful, but you have not proved the goal.~%")
+    (my-cw (output-file) "RUNNING: missedgoal-prove: should say proof was successful, but you have not proved the goal.~%")
     (verify-proof (output-file) '(= (g (f c) a) (g (f a) b)) (assumptions1) (rules1) (proof1) nil '(r s a) 0)))
 
 ; Run all good tests
@@ -709,6 +734,8 @@
         ((not (prove14)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 14 failed.~%") nil))
         ((not (prove14-auto)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 14 with step skipping failed.~%") nil))
         ((not (prove15-auto)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 15 with step skipping failed.~%") nil))
+        ((not (prove16)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 16 failed.~%") nil))
+        ((not (prove16-auto)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 16 with step skipping failed.~%") nil))
         (T (prog2$ (my-cw (output-file) "~%SUCCESS: All good tests passed.~%") T))))
 
 ; Run all bad tests
