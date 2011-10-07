@@ -134,7 +134,7 @@
      (7 (-*> B [ [ [ ] [ ] ] ]) nil nil nil)))
 (defun prove5b-auto ()
   (prog2$
-    (my-cw (output-file) "Running prove5b-auto...~%")
+    (my-cw (output-file) "Running prove5b-auto... (should be a few seconds)~%")
     (proof-check (output-file) (assumptions5b) (rules5b) (proof5b-auto) '(B [ ]) nil 3)))
 
 ; TODO This test is disabled because it uses recursion depth 6, which is currently too much for the
@@ -217,7 +217,7 @@
     (6 (-*> S _x _l _v _i _i) nil nil nil)))
 (defun prove6b-auto ()
   (prog2$
-    (my-cw (output-file) "Running prove6b-auto...~%")
+    (my-cw (output-file) "Running prove6b-auto... (should be about half a minute) ~%")
     (proof-check (output-file) (assumptions6b) (rules6b-auto) (proof6b-auto) '(S T X U Y I _x _l _c _v _i) nil 3)))
 
 ; TODO This test is disabled because it uses recursion depth 5, which is currently too much for the
