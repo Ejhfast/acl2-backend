@@ -38,6 +38,14 @@
     (my-cw (output-file) "Running prove1-goal...~%")
     (verify-proof (output-file) '(= (g (f a) b) (g (f c) a)) (assumptions1) (rules1) (proof1) nil '(r s a) 0)))
 
+; Note that this proves 3 intermediate statements with depth 2, since they are not nested in series
+(defun proof1-auto ()
+  '((step4 (= (g (f a) b) (g (f c) a)) nil nil nil)))
+(defun prove1-auto ()
+  (prog2$
+    (my-cw (output-file) "Running prove1-auto...~%")
+    (proof-check (output-file) (assumptions1) (rules1) (proof1-auto) nil nil 2)))
+
 ; Problem: Prove a * (b - b) = 0
 ; TODO Think about a more natural way to do substitutions?
 (defun rules2 ()
@@ -53,6 +61,13 @@
   (prog2$
     (my-cw (output-file) "Running prove2...~%")
     (proof-check (output-file) nil (rules2) (proof2) nil nil 0)))
+
+(defun proof2-auto ()
+  '((step3 (= (* a (- b b)) 0) nil nil nil)))
+(defun prove2-auto ()
+  (prog2$
+    (my-cw (output-file) "Running prove2-auto...~%")
+    (proof-check (output-file) nil (rules2) (proof2-auto) nil nil 2)))
 
 ; Tests proofs with no assumptions
 (defun rules3 ()
@@ -114,22 +129,22 @@
     (my-cw (output-file) "Running prove5b...~%")
     (proof-check (output-file) (assumptions5b) (rules5b) (proof5b) '(B [ ]) nil 0)))
 
-(defun proof5c ()
+(defun proof5b-auto ()
    '((4 (-*> B [ [ [ B ] B ] ]) nil nil nil)
      (7 (-*> B [ [ [ ] [ ] ] ]) nil nil nil)))
-(defun prove5c ()
+(defun prove5b-auto ()
   (prog2$
-    (my-cw (output-file) "Running prove5c...~%")
-    (proof-check (output-file) (assumptions5b) (rules5b) (proof5c) '(B [ ]) nil 3)))
+    (my-cw (output-file) "Running prove5b-auto...~%")
+    (proof-check (output-file) (assumptions5b) (rules5b) (proof5b-auto) '(B [ ]) nil 3)))
 
 ; TODO This test is disabled because it uses recursion depth 6, which is currently too much for the
 ;      proof-checker to handle!
-(defun proof5d ()
+(defun proof5b-auto-full ()
   '((7 (-*> B [ [ [ ] [ ] ] ]) nil nil nil)))
-(defun prove5d ()
+(defun prove5b-auto-full ()
   (prog2$
-    (my-cw (output-file) "Running prove5d...~%")
-    (proof-check (output-file) (assumptions5b) (rules5b) (proof5d) '(B [ ]) nil 6)))
+    (my-cw (output-file) "Running prove5b-auto-full...~%")
+    (proof-check (output-file) (assumptions5b) (rules5b) (proof5b-auto) '(B [ ]) nil 6)))
 
 ; Simple CFG (old format) - example from CS 143 WA2, #2
 (defun rules6 ()
@@ -189,6 +204,30 @@
   (prog2$
     (my-cw (output-file) "Running prove6b...~%")
     (proof-check (output-file) (assumptions6b) (rules6b) (proof6b) '(S T X U Y I _x _l _c _v _i) nil 0)))
+
+(defun rules6b-auto ()
+  '((prodS (implies (and (-*> nonterm s1 S s2) (-> S rep)) (-*> nonterm s1 rep s2)) (s1 rep s2))
+    (prodT (implies (and (-*> nonterm s1 T s2) (-> T rep)) (-*> nonterm s1 rep s2)) (s1 rep s2))
+    (prodX (implies (and (-*> nonterm s1 X s2) (-> X rep)) (-*> nonterm s1 rep s2)) (s1 rep s2))
+    (prodU (implies (and (-*> nonterm s1 U s2) (-> U rep)) (-*> nonterm s1 rep s2)) (s1 rep s2))
+    (prodY (implies (and (-*> nonterm s1 Y s2) (-> Y rep)) (-*> nonterm s1 rep s2)) (s1 rep s2))
+    (prodI (implies (and (-*> nonterm s1 I s2) (-> I rep)) (-*> nonterm s1 rep s2)) (s1 rep s2))))
+(defun proof6b-auto ()
+  '((4 (-*> S _x _l _v _i I) nil nil nil)
+    (6 (-*> S _x _l _v _i _i) nil nil nil)))
+(defun prove6b-auto ()
+  (prog2$
+    (my-cw (output-file) "Running prove6b-auto...~%")
+    (proof-check (output-file) (assumptions6b) (rules6b-auto) (proof6b-auto) '(S T X U Y I _x _l _c _v _i) nil 3)))
+
+; TODO This test is disabled because it uses recursion depth 5, which is currently too much for the
+;      proof-checker to handle!
+(defun proof6b-auto-full ()
+  '((6 (-*> S _x _l _v _i _i) nil nil nil)))
+(defun prove6b-auto-full ()
+  (prog2$
+    (my-cw (output-file) "Running prove6b-auto-full...~%")
+    (proof-check (output-file) (assumptions6b) (rules6b-auto) (proof6b-auto-full) '(S T X U Y I _x _l _c _v _i) nil 5)))
 
 ; Context-sensitive grammars (current format) - first example from Wikipedia
 (defun assumptions7 ()
@@ -383,18 +422,18 @@
     (proof-check (output-file) (assumptions13) (rules13) (proof13) nil nil 0)))
 
 ; Same as basic proof, but now using search to avoid stating step 1
-(defun proof13b ()
+(defun proof13-auto ()
   '((1 (= (f b) (f a)) nil nil nil)))
-(defun prove13b ()
+(defun prove13-auto ()
   (prog2$
-    (my-cw (output-file) "Running prove13b...~%")
-    (proof-check (output-file) (assumptions13) (rules13) (proof13b) nil nil 1)))
+    (my-cw (output-file) "Running prove13-auto...~%")
+    (proof-check (output-file) (assumptions13) (rules13) (proof13-auto) nil nil 1)))
 
 ; Actually going to depth 100000 would be bad, solution should be found before that
-(defun prove13c ()
+(defun prove13-auto2 ()
   (prog2$
-    (my-cw (output-file) "Running prove13c...~%")
-    (proof-check (output-file) (assumptions13) (rules13) (proof13b) nil nil 100000)))
+    (my-cw (output-file) "Running prove13-auto2...~%")
+    (proof-check (output-file) (assumptions13) (rules13) (proof13-auto) nil nil 100000)))
 
 ;;;;;;;;;;;;;;;;;;
 ;;; BAD PROOFS ;;;
@@ -611,13 +650,13 @@
 (defun check-good ()
   (cond ((not (prove1)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 1 failed.~%") nil))
         ((not (prove1-goal)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 1 with goal failed.~%") nil))
+        ((not (prove1-auto)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 1 with step skipping failed.~%") nil))
         ((not (prove2)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 2 failed.~%") nil))
+        ((not (prove2-auto)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 2 with step skipping failed.~%") nil))
         ((not (prove3)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 3 failed.~%") nil))
         ((not (prove4)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 4 failed.~%") nil))
         ((not (prove5)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 5 failed.~%") nil))
         ((not (prove5b)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 5b failed.~%") nil))
-        ((not (prove5c)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 5c failed.~%") nil)) ; Slower test
-;        ((not (prove5d)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 5d failed.~%") nil)) ; Disabled, see test
         ((not (prove6)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 6 failed.~%") nil))
         ((not (prove6b)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 6b failed.~%") nil))
         ((not (prove7)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 7 failed.~%") nil))
@@ -627,8 +666,8 @@
         ((not (prove11)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 11 failed.~%") nil))
         ((not (prove12)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 12 failed.~%") nil))
         ((not (prove13)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 13 failed.~%") nil))
-        ((not (prove13b)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 13b failed.~%") nil))
-        ((not (prove13c)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 13c failed.~%") nil))
+        ((not (prove13-auto)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 13 with step skipping failed.~%") nil))
+        ((not (prove13-auto2)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 13 with step skipping and large search depth failed.~%") nil))
         (T (prog2$ (my-cw (output-file) "~%SUCCESS: All good tests passed.~%") T))))
 
 ; Run all bad tests
@@ -662,6 +701,13 @@
         ((insufficientdepth-prove) (prog2$ (my-cw (output-file) "~%ERROR: insufficientdepth passed, but it should have failed.~%") nil))
         ((missedgoal-prove) (prog2$ (my-cw (output-file) "~%ERROR: missedgoal passed, but it should have failed.~%") nil))
         (T (prog2$ (my-cw (output-file) "~%SUCCESS: All bad tests failed.~%") T))))
+
+(defun check-long ()
+  (cond ((not (prove5b-auto)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 5b with step skipping failed.~%") nil))
+;        ((not (prove5b-auto-full)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 5b with full step skipping failed.~%") nil)) ; Disabled, see test
+        ((not (prove6b-auto)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 6 with step skipping failed.~%") nil))
+;        ((not (prove6b-auto-full)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 6b with full step skipping failed.~%") nil)) ; Disabled, see test
+        (T (prog2$ (my-cw (output-file) "~%SUCCESS: All long-running tests passed.~%") T))))
 
 ;;; RUN ALL TESTS ;;;
 (defun check-all ()
