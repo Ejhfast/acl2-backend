@@ -601,11 +601,24 @@
              (my-cw output-file "ERROR: Requirements list is non-empty, but search depth is non-zero.~%"))
             ((< depth 0)
              (my-cw output-file "ERROR: Invalid search depth specified.~%"))
-            (T
-              (if (check-proof output-file fmt-assumptions fmt-rules fmt-proof fmt-required depth)
-                (prog2$
-                  (my-cw output-file "RESULT: PROOF SUCCEEDED.~%")
-                  T)
-                (prog2$
-                  (my-cw output-file "RESULT: PROOF FAILED.~%")
-                  nil)))))))
+            (T (check-proof output-file fmt-assumptions fmt-rules fmt-proof fmt-required depth))))))
+
+(defun extract-second (list-of-lists)
+  (if (null list-of-lists)
+    nil
+    (cons (second (first list-of-lists)) (extract-second (rest list-of-lists)))))
+
+(defun verify-proof (output-file goal assumptions rules proof constants required depth)
+  (let ((result (proof-check output-file assumptions rules proof constants required depth)))
+    (if result
+      ; Check if goal has been reached
+      (if (member-equal goal (extract-second proof))
+        (prog2$
+          (my-cw output-file "RESULT: Congratulations! You have proved the goal.~%")
+          T)
+        (prog2$
+          (my-cw output-file "RESULT: Proof was successful, but you have not proved the goal, ~x0.~%" goal)
+          nil))
+      (prog2$
+        (my-cw output-file "RESULT: Proof failed.~%")
+        nil))))

@@ -33,6 +33,11 @@
     (my-cw (output-file) "Running prove1...~%")
     (proof-check (output-file) (assumptions1) (rules1) (proof1) nil '(r s a) 0)))
 
+(defun prove1-goal ()
+  (prog2$
+    (my-cw (output-file) "Running prove1-goal...~%")
+    (verify-proof (output-file) '(= (g (f a) b) (g (f c) a)) (assumptions1) (rules1) (proof1) nil '(r s a) 0)))
+
 ; Problem: Prove a * (b - b) = 0
 ; TODO Think about a more natural way to do substitutions?
 (defun rules2 ()
@@ -597,9 +602,15 @@
     (my-cw (output-file) "Running insufficientdepth-prove: should fail with recursion depth 2.~%")
     (proof-check (output-file) (assumptions5b) (rules5b) (insufficientdepthp) '(B [ ]) nil 2)))
 
+(defun missedgoal-prove ()
+  (prog2$
+    (my-cw (output-file) "Running missedgoal-prove: should say proof was successful, but you have not proved the goal.~%")
+    (verify-proof (output-file) '(= (g (f c) a) (g (f a) b)) (assumptions1) (rules1) (proof1) nil '(r s a) 0)))
+
 ; Run all good tests
 (defun check-good ()
   (cond ((not (prove1)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 1 failed.~%") nil))
+        ((not (prove1-goal)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 1 with goal failed.~%") nil))
         ((not (prove2)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 2 failed.~%") nil))
         ((not (prove3)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 3 failed.~%") nil))
         ((not (prove4)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 4 failed.~%") nil))
@@ -649,6 +660,7 @@
         ((notastring-prove) (prog2$ (my-cw (output-file) "~%ERROR: notastring passed, but it should have failed.~%") nil))
         ((nosearch-prove) (prog2$ (my-cw (output-file) "~%ERROR: nosearch passed, but it should have failed.~%") nil))
         ((insufficientdepth-prove) (prog2$ (my-cw (output-file) "~%ERROR: insufficientdepth passed, but it should have failed.~%") nil))
+        ((missedgoal-prove) (prog2$ (my-cw (output-file) "~%ERROR: missedgoal passed, but it should have failed.~%") nil))
         (T (prog2$ (my-cw (output-file) "~%SUCCESS: All bad tests failed.~%") T))))
 
 ;;; RUN ALL TESTS ;;;
