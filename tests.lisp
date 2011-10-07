@@ -466,6 +466,13 @@
     (my-cw (output-file) "Running prove14-auto...~%")
     (proof-check (output-file) (assumptions14) (rules14) (proof14-auto) nil nil 1)))
 
+(defun proof15-auto ()
+  '((1 (= (+ (+ 1 2) (+ 3 (+ 1 2))) (+ (+ 1 2) (+ 3 3))) nil nil nil)))
+(defun prove15-auto ()
+  (prog2$
+    (my-cw (output-file) "Running prove15-auto...~%")
+    (proof-check (output-file) (assumptions14) (rules14) (proof15-auto) nil nil 1)))
+
 ;;;;;;;;;;;;;;;;;;
 ;;; BAD PROOFS ;;;
 ;;;;;;;;;;;;;;;;;;
@@ -701,6 +708,7 @@
         ((not (prove13-auto2)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 13 with step skipping and large search depth failed.~%") nil))
         ((not (prove14)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 14 failed.~%") nil))
         ((not (prove14-auto)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 14 with step skipping failed.~%") nil))
+        ((not (prove15-auto)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 15 with step skipping failed.~%") nil))
         (T (prog2$ (my-cw (output-file) "~%SUCCESS: All good tests passed.~%") T))))
 
 ; Run all bad tests

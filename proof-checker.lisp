@@ -143,7 +143,7 @@
 (defun extract-stmts (proof-path)
   (if (null proof-path)
     nil
-    (cons (second (first proof-path)) (extract-stmts (rest proof-path)))))
+    (cons (remove-quote (second (first proof-path))) (extract-stmts (rest proof-path)))))
 
 (mutual-recursion
   (defun display-proof-step (output-file proof-path)
@@ -154,7 +154,7 @@
             (assumptions (cdddr proof-path)))
         (prog2$
           (display-proof-step-list output-file assumptions)
-          (my-cw output-file "Successfully proved ~x0 using rule ~x1 and assumptions ~x2.~%" stmt rule-used (extract-stmts assumptions))))))
+          (my-cw output-file "Successfully proved ~x0 using rule ~x1 and assumptions ~x2.~%" (remove-quote stmt) rule-used (extract-stmts assumptions))))))
   
   (defun display-proof-step-list (output-file proof-path-list)
     (if (null proof-path-list)
