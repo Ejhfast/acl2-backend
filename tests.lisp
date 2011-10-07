@@ -7,7 +7,9 @@
 (defmacro output-file ()
   nil)
 
+;;;;;;;;;;;;;;;;;;;
 ;;; GOOD PROOFS ;;;
+;;;;;;;;;;;;;;;;;;;
 
 ; BASIC TESTS
 
@@ -82,9 +84,10 @@
     (surround (-> B [ B ]))
     (append (-> B B B))))
 (defun rules5b ()
-  '((prod (implies (and (-*> nonterm s1 B s2) (-> B rep)) (-*> nonterm s1 rep s2)) (s1 rep s2)))) ; Also need to constrain nonterm to refer to exactly one term
+  ; Note: nonterm is constrained to refer to exactly one term
+  '((prod (implies (and (-*> nonterm s1 B s2) (-> B rep)) (-*> nonterm s1 rep s2)) (s1 rep s2))))
 (defun proof5b ()
-  '((1 (-*> B [ B ]) nil nil nil)
+  '((1 (-*> B [ B ]) prod nil (base surround))
     (2 (-*> B [ [ B ] ]) nil nil nil)
     (3 (-*> B [ [ B B ] ]) nil nil nil)
     (4 (-*> B [ [ [ B ] B ] ]) nil nil nil)
@@ -93,6 +96,19 @@
     (7 (-*> B [ [ [ ] [ ] ] ]) nil nil nil)))
 (defun prove5b ()
   (proof-check (output-file) (assumptions5b) (rules5b) (proof5b) '(B [ ]) nil 0))
+
+(defun proof5c ()
+   '((4 (-*> B [ [ [ B ] B ] ]) nil nil nil)
+     (7 (-*> B [ [ [ ] [ ] ] ]) nil nil nil)))
+(defun prove5c ()
+  (proof-check (output-file) (assumptions5b) (rules5b) (proof5c) '(B [ ]) nil 3))
+
+; TODO This test is disabled because it uses recursion depth 6, which is currently too much for the
+;      proof-checker to handle!
+(defun proof5d ()
+  '((7 (-*> B [ [ [ ] [ ] ] ]) nil nil nil)))
+(defun prove5d ()
+  (proof-check (output-file) (assumptions5b) (rules5b) (proof5d) '(B [ ]) nil 6))
 
 ; Simple CFG (old format) - example from CS 143 WA2, #2
 (defun rules6 ()
@@ -291,8 +307,9 @@
 (defun prove10 ()
   (proof-check (output-file) (assumptions10) (rules10) (proof10) '(Object abort type_name IO in_string in_int Int Bool String length concat substr true false <- colon comma dot op cp hasType if then else fi let in +) nil 0))
 
-; Tests that the proof-checker can correctly unify with ((a b) a) with ((x y) x), where both a and b are strings.
-; This means that the proof-checker will use the wrong substitutions when unifying (a b) and (x y), fail, and backtrack properly.
+; Tests that the proof-checker can correctly unify ((a b) a) with ((x y) x), where both a and b are
+; strings. This means that the proof-checker will use the wrong substitutions when unifying (a b)
+; and (x y), fail, and backtrack properly.
 (defun rules11 ()
   '((rule (list (list a b) a) (a b))))
 (defun proof11 ()
@@ -300,7 +317,45 @@
 (defun prove11 ()
   (proof-check (output-file) nil (rules11) (proof11) nil nil 0))
 
+; Ensures that backtracking will work during assumptions as well. The proof-checker should unify
+; (a) with (x), then use the substitutions ((b) (c y z)) when unifying with a1. This will fail
+; during attempts to unify a1 and a2 with (b a c). Then, the proof-checker must backtrack, using
+; the substitutions ((b y) (c z)) instead, and successfully prove the conclusion.
+(defun rules12 ()
+  '((rule (implies (and (list b c) (list b a c)) (list a)) (a b c))))
+(defun assumptions12 ()
+  '((a1 (list y z))
+    (a2 (list y x z))))
+(defun proof12 ()
+  '((1 (list x) nil nil nil)))
+(defun prove12 ()
+  (proof-check (output-file) (assumptions12) (rules12) (proof12) nil nil 0))
+
+; Basic proof
+(defun rules13 ()
+  '((=symm (implies (= x y) (= y x)))
+    (fcong (implies (= x y) (= (f x) (f y))))))
+(defun assumptions13 ()
+  '((a1 (= a b))))
+(defun proof13 ()
+  '((1 (= b a) nil nil nil)
+    (2 (= (f b) (f a)) nil nil nil)))
+(defun prove13 ()
+  (proof-check (output-file) (assumptions13) (rules13) (proof13) nil nil 0))
+
+; Same as basic proof, but now using search to avoid stating step 1
+(defun proof13b ()
+  '((1 (= (f b) (f a)) nil nil nil)))
+(defun prove13b ()
+  (proof-check (output-file) (assumptions13) (rules13) (proof13b) nil nil 1))
+
+; Actually going to depth 100000 would be bad, solution should be found before that
+(defun prove13c ()
+  (proof-check (output-file) (assumptions13) (rules13) (proof13b) nil nil 100000))
+
+;;;;;;;;;;;;;;;;;;
 ;;; BAD PROOFS ;;;
+;;;;;;;;;;;;;;;;;;
 
 (defun badalistp ()
   '((step1 (= b b) =refl (x b) nil)))
@@ -479,6 +534,21 @@
     (my-cw (output-file) "Running notastring-prove: should say xyz is not a string.~%")
     (proof-check (output-file) nil (rules9) (notastringp) nil nil 0)))
 
+(defun nosearchp ()
+  '((2 (-*> B [ [ B ] ]) nil nil nil)))
+(defun nosearch-prove ()
+  (prog2$
+    (my-cw (output-file) "Running nosearch-prove: should fail without mentioning recursion depth.~%")
+    (proof-check (output-file) (assumptions5b) (rules5b) (nosearchp) '(B [ ]) nil 0)))
+
+(defun insufficientdepthp ()
+  '((4 (-*> B [ [ [ B ] B ] ]) nil nil nil)
+    (7 (-*> B [ [ [ ] [ ] ] ]) nil nil nil)))
+(defun insufficientdepth-prove ()
+  (prog2$
+    (my-cw (output-file) "Running insufficientdepth-prove: should fail with recursion depth 2.~%")
+    (proof-check (output-file) (assumptions5b) (rules5b) (insufficientdepthp) '(B [ ]) nil 2)))
+
 ; Run all good tests
 (defun check-good ()
   (cond ((not (prove1)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 1 failed.~%") nil))
@@ -487,6 +557,8 @@
         ((not (prove4)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 4 failed.~%") nil))
         ((not (prove5)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 5 failed.~%") nil))
         ((not (prove5b)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 5b failed.~%") nil))
+        ((not (prove5c)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 5c failed.~%") nil)) ; Slower test
+;        ((not (prove5d)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 5d failed.~%") nil)) ; Disabled, see test
         ((not (prove6)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 6 failed.~%") nil))
         ((not (prove6b)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 6b failed.~%") nil))
         ((not (prove7)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 7 failed.~%") nil))
@@ -494,6 +566,10 @@
         ((not (prove9)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 9 failed.~%") nil))
         ((not (prove10)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 10 failed.~%") nil))
         ((not (prove11)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 11 failed.~%") nil))
+        ((not (prove12)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 12 failed.~%") nil))
+        ((not (prove13)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 13 failed.~%") nil))
+        ((not (prove13b)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 13b failed.~%") nil))
+        ((not (prove13c)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 13c failed.~%") nil))
         (T (prog2$ (my-cw (output-file) "~%SUCCESS: All good tests passed.~%") T))))
 
 ; Run all bad tests
@@ -522,6 +598,8 @@
         ((nosamematch-prove) (prog2$ (my-cw (output-file) "~%ERROR: nosamematch passed, but it should have failed.~%") nil))
         ((notanumber-prove) (prog2$ (my-cw (output-file) "~%ERROR: notanumber passed, but it should have failed.~%") nil))
         ((notastring-prove) (prog2$ (my-cw (output-file) "~%ERROR: notastring passed, but it should have failed.~%") nil))
+        ((nosearch-prove) (prog2$ (my-cw (output-file) "~%ERROR: nosearch passed, but it should have failed.~%") nil))
+        ((insufficientdepth-prove) (prog2$ (my-cw (output-file) "~%ERROR: insufficientdepth passed, but it should have failed.~%") nil))
         (T (prog2$ (my-cw (output-file) "~%SUCCESS: All bad tests failed.~%") T))))
 
 ;;; RUN ALL TESTS ;;;

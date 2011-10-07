@@ -4,6 +4,9 @@
 
 ; (defmacro output-file () "afs/cs.stanford.edu/u/clee0/www/tmp/output.txt")
 
+(defun forbidden ()
+  '(nil and or = * + / canprove useforproof))
+
 ;;; DISPLAY ;;;
 
 ; Recursively removes quotes from an expression or list
@@ -85,6 +88,7 @@
 ; 1. Must be a valid association list.
 ; 2. Must not contain any duplicate names, i.e. keys.
 ; 3. Keys must all be atoms.
+; 4. Names must not be forbidden.
 (defun check-mappings (output-file x)
   (if (not (alistp x))
     (prog2$
@@ -95,6 +99,8 @@
              (prog2$
                (my-cw output-file "ERROR: Found duplicate names.~%") ; Any way to tell which name?
                nil))
+            ((intersectp-equal (forbidden) keys)
+             (my-cw output-file "ERROR: Found forbidden name(s): ~x0.~%" (remove-quote (intersection-equal (forbidden) keys))))
             ((not (check-atoms output-file keys)) nil)
             (T T)))))
 
@@ -255,16 +261,12 @@
   (if (not (check-mappings output-file x))
     nil
     (let ((fmt-alist (mark-constants-alist x constants))
-          (forbidden-names (append '(nil and or = * + /) constants))
+          (forbidden-names (append (forbidden) constants))
           (keys (strip-cars x)))
       (cond ((intersectp-equal forbidden-names keys)
-             (prog2$
-               (my-cw output-file "ERROR: Found forbidden name(s): ~x0.~%" (remove-quote (intersection-equal forbidden-names keys)))
-               nil))
+             (my-cw output-file "ERROR: Found forbidden name(s): ~x0.~%" (remove-quote (intersection-equal forbidden-names keys))))
             ((contains-numbers keys)
-             (prog2$
-               (my-cw output-file "ERROR: Association list may not map to numbers, but it does: ~x0.~%" (remove-quote fmt-alist))
-               nil))
+             (my-cw output-file "ERROR: Association list may not map to numbers, but it does: ~x0.~%" (remove-quote fmt-alist)))
             ((check-alist-vals output-file fmt-alist) fmt-alist)
             (T nil)))))
 

@@ -7,12 +7,12 @@
 ;;; HELPER FUNCTIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Returns true if the list is a list of atoms
-(defun list-of-atoms (lst)
+; Returns true if the list is a list of assumptions
+(defun list-of-assumptions (lst)
   (if (null lst)
     T
-    (if (atom (first lst))
-      (list-of-atoms (rest lst))
+    (if (= (len (first lst)) 2)
+      (list-of-assumptions (rest lst))
       nil)))
 
 ; Returns the values corresponding to a given key
@@ -80,16 +80,16 @@
 
 (mutual-recursion
   ; Using the associations in alist, makes the appropriate substitutions in every element in expression lst.
-  (defun my-sublis-var-lst (alist lst)
+  (defun my-sublis-var-lst (lst alist)
     (declare (xargs :measure (acl2-count lst)
                     :guard (and (symbol-alistp alist)
                                 (pseudo-term-listp lst))))
     (if (endp lst)
       nil
-      (let ((subbed (my-sublis-var alist (car lst))))
-        (append subbed (my-sublis-var-lst alist (cdr lst))))))
+      (let ((subbed (my-sublis-var (car lst) alist)))
+        (append subbed (my-sublis-var-lst (cdr lst) alist)))))
 
-  (defun my-sublis-var (alist form)
+  (defun my-sublis-var (form alist)
     (declare (xargs :measure (acl2-count form)
                     :guard (and (symbol-alistp alist)
                                 (pseudo-termp form))))
@@ -98,9 +98,9 @@
              (cond (a (cdr a))
                    (t (list form)))))
           ((fquotep form) (list form))
-          (t (list (cons
-                     (ffn-symb form)
-                     (my-sublis-var-lst alist (fargs form))))))))
+          (t (cons
+               (ffn-symb form)
+               (my-sublis-var-lst (fargs form) alist))))))
 
 (defun sub-all-terms (subst-into subs)
   (if (null subst-into)
@@ -144,18 +144,18 @@
 (defun extract-stmts (proof-path)
   (if (null proof-path)
     nil
-    (if (atom (first proof-path))
-      (cons (first proof-path) (extract-stmts (rest proof-path)))
-      (cons (second (first proof-path)) (extract-stmts (rest proof-path))))))
+    (cons (second (first proof-path)) (extract-stmts (rest proof-path)))))
 
 (mutual-recursion
   (defun display-proof-step (output-file proof-path)
-    (let ((stmt (second proof-path))
-          (rule-used (third proof-path))
-          (assumptions (cdddr proof-path)))
-      (prog2$
-        (display-proof-step-list output-file assumptions)
-        (my-cw output-file "Successfully proved ~x0 using rule ~x1 and assumptions ~x2.~%" stmt rule-used (extract-stmts assumptions)))))
+    (if (= (len proof-path) 2)
+      nil ; Of the form (T ASSUMPTION), for which no printing needs to be done
+      (let ((stmt (second proof-path))
+            (rule-used (third proof-path))
+            (assumptions (cdddr proof-path)))
+        (prog2$
+          (display-proof-step-list output-file assumptions)
+          (my-cw output-file "Successfully proved ~x0 using rule ~x1 and assumptions ~x2.~%" stmt rule-used (extract-stmts assumptions))))))
   
   (defun display-proof-step-list (output-file proof-path-list)
     (if (null proof-path-list)
@@ -169,8 +169,8 @@
 (defun report-success-base (output-file step-name proof-path)
   (prog2$
     (prog2$
-      (if (list-of-atoms (cdddr proof-path))
-        nil
+      (if (list-of-assumptions (cdddr proof-path))
+        (my-cw output-file "Step ~x0: " step-name)
         (my-cw output-file "Step ~x0: Proved in multiple steps:~%" step-name))
       (display-proof-step output-file proof-path))
     T))
@@ -248,7 +248,7 @@
       (if (null rule-reqs)
         (mv T subs assumptions-used)
         (if (member 'a required)
-          (unify-stmts output-file (first rule-reqs) (cdr (first assumptions)) rest-unifications str-vars restrictions subs (rest rule-reqs) (rest assumptions) required (append assumptions-used (list (first (first assumptions)))))
+          (unify-stmts output-file (first rule-reqs) (cdr (first assumptions)) rest-unifications str-vars restrictions subs (rest rule-reqs) (rest assumptions) required (append assumptions-used (list (list T (first (first assumptions))))))
           (find-assumptions-in-pool output-file rule-reqs assumptions assumptions str-vars restrictions subs required assumptions-used)))
       (match-lists-stmts output-file (first (first rest-unifications)) (second (first rest-unifications)) (rest rest-unifications) str-vars restrictions subs rule-reqs assumptions required assumptions-used)))
 
@@ -257,7 +257,7 @@
     (if (null assumptions-left)
       (mv nil nil nil) ; No assumptions left to try
       (mv-let (success new-subs new-assumptions-used)
-              (unify-stmts output-file (first rule-reqs) (cdr (first assumptions-left)) nil str-vars restrictions subs (rest rule-reqs) assumptions required (append assumptions-used (list (first (first assumptions)))))
+              (unify-stmts output-file (first rule-reqs) (cdr (first assumptions-left)) nil str-vars restrictions subs (rest rule-reqs) assumptions required (append assumptions-used (list (list T (first (first assumptions-left))))))
               (if success
                 (mv T new-subs new-assumptions-used)
                 (find-assumptions-in-pool output-file rule-reqs (rest assumptions-left) assumptions str-vars restrictions subs required assumptions-used))))))
@@ -290,7 +290,7 @@
           (declare (ignore str-vars restrictions))
           (let ((terms-in-concl (get-vars-from-term rule-concl))
                 (terms-in-reqs (get-vars-from-term-lst rule-reqs)))
-            (not (null (set-difference-equal terms-in-reqs terms-in-concl))))))
+            (set-difference-equal terms-in-reqs terms-in-concl))))
 
 (mutual-recursion
   (defun generate-all-subs (pattern term rest-unifications str-vars restrictions subs subs-list)
@@ -351,31 +351,48 @@
       (cons subs subs-list)
       (match-lists (first (first rest-unifications)) (second (first rest-unifications)) (rest rest-unifications) str-vars restrictions subs subs-list))))
 
+(defun insert-useforproofs (rule-name list-stmts)
+  (if (null list-stmts)
+    nil
+    (cons (cons 'useforproof (cons rule-name (first list-stmts))) (insert-useforproofs rule-name (rest list-stmts)))))
+
 (defun get-needed-assumptions-list (to-expand rule)
   (mv-let (rule-concl rule-reqs str-vars restrictions)
           (get-rule-info rule)
           (let ((subs-list (generate-all-subs rule-concl (list to-expand) nil str-vars restrictions nil nil)))
-            (sub-all rule-reqs subs-list))))
+            (insert-useforproofs (first rule) (sub-all rule-reqs subs-list)))))
+
+(defun expand-proof-paths (to-expand rules)
+  (if (null rules)
+    nil
+    (let ((rest-expansions (expand-proof-paths to-expand (cdr rules))))
+      (if (has-free-vars (first rules))
+        rest-expansions
+        (let ((first-expansions (get-needed-assumptions-list to-expand (first rules))))
+          (append first-expansions rest-expansions))))))
 
 (defun expand-no-free-vars (to-expand rules)
   (if (null rules)
     nil
-    (let ((rest-expansions (expand-no-free-vars to-expand (cdr rules))))
-      (if (has-free-vars (first rules))
-        rest-expansions
-        (let ((first-expansions (get-needed-assumptions-list to-expand (first rules))))
-          (append (list first-expansions) rest-expansions))))))
+    (let ((proof-paths (expand-proof-paths to-expand rules)))
+      (if (null proof-paths)
+        nil
+        (cons 'canprove (cons to-expand (expand-proof-paths to-expand rules)))))))
 
 ; Attempt to prove the given conclusion with the available rules and assumptions
 (defun prove-stmt (output-file assumptions rules step-concl given-subs required depth)
-  ; First, attempt to prove in one step
-  (mv-let (success proof-details)
-          (prove-in-one-step output-file assumptions rules step-concl given-subs required)
-          (if success
-            (mv success proof-details)
-            (if (< depth 1)
-              (mv nil nil) ; Not permitted to skip steps
-              (mv nil (expand-no-free-vars step-concl rules)))))) ; If we have recursion depth left, return a tree of possible proof methods
+  ; Ensure that we haven't already proved the conclusion
+  (let ((matching-assumption (rassoc-equal (list step-concl) assumptions)))
+    (if (null matching-assumption)
+      ; First, attempt to prove in one step
+      (mv-let (success proof-details)
+              (prove-in-one-step output-file assumptions rules step-concl given-subs required)
+              (if success
+                (mv success proof-details)
+                (if (< depth 1)
+                  (mv nil nil) ; Not permitted to skip steps
+                  (mv nil (expand-no-free-vars step-concl rules))))) ; If we have recursion depth left, return a tree of possible proof methods
+      (mv T (cons T (cons (first matching-assumption) nil))))))
 
 (mutual-recursion
   (defun prove-tree (output-file assumptions rules to-prove depth)
@@ -383,7 +400,7 @@
       (cond ((equal 'canprove prefix)
              (if (>= (len to-prove) 3)
                (let ((stmt (second to-prove))
-                     (expanded-list (prove-tree-list output-file assumptions rules (cddr to-prove) depth)))
+                     (expanded-list (prove-tree-canprove output-file assumptions rules (cddr to-prove) depth)))
                  (if (null expanded-list)
                    nil
                    (cons 'canprove (cons stmt expanded-list))))
@@ -391,30 +408,37 @@
             ((equal 'useforproof prefix)
              (if (>= (len to-prove) 3)
                (let ((rule-used (second to-prove))
-                     (expanded-list (prove-tree-list output-file assumptions rules (cddr to-prove) depth)))
+                     (expanded-list (prove-tree-useforproof output-file assumptions rules (cddr to-prove) depth)))
                  (if (null expanded-list)
                    nil
                    (cons 'useforproof (cons rule-used expanded-list))))
                (my-cw output-file "ERROR: Invalid useforproof term detected: ~x0.~%" to-prove)))
             ((equal T prefix) to-prove) ; Completed proof on this branch, no further work needed
-            (T (my-cw output-file "ERROR: Branch type ~x0 not recognized!~%" prefix)))))
+            (T
+              (mv-let (success proof-details)
+                      (prove-stmt output-file assumptions rules to-prove nil nil depth)
+                      (declare (ignore success))
+                      proof-details)))))
 
-  (defun prove-tree-list (output-file assumptions rules to-prove-list depth)
+  (defun prove-tree-canprove (output-file assumptions rules to-prove-list depth)
     (if (null to-prove-list)
       nil
-      (let ((first-to-prove (first to-prove-list))
-            (processed-rest (prove-tree-list output-file assumptions rules (cdr to-prove-list) depth)))
-        (if (consp first-to-prove)
-          (let ((processed-first (prove-tree output-file assumptions rules first-to-prove depth)))
-            (if (null processed-first)
-              processed-rest
-              (cons processed-first processed-rest)))
-          (mv-let (success expansion)
-                  (prove-stmt output-file assumptions rules first-to-prove nil nil depth)
-                  (declare (ignore success))
-                  (if (null expansion)
-                    processed-rest
-                    (cons expansion processed-rest))))))))
+      (let* ((first-to-prove (first to-prove-list))
+             (processed-first (prove-tree output-file assumptions rules first-to-prove depth))
+             (processed-rest (prove-tree-canprove output-file assumptions rules (cdr to-prove-list) depth)))
+        (if (null processed-first)
+          processed-rest
+          (cons processed-first processed-rest)))))
+  
+  (defun prove-tree-useforproof (output-file assumptions rules to-prove-list depth)
+    (let* ((first-to-prove (first to-prove-list))
+           (processed-first (prove-tree output-file assumptions rules first-to-prove depth)))
+      (if (or (equal (len to-prove-list) 1) (null processed-first))
+        (list processed-first)
+        (let ((processed-rest (prove-tree-useforproof output-file assumptions rules (cdr to-prove-list) depth)))
+          (if (null processed-rest)
+            nil
+            (cons processed-first processed-rest)))))))
 
 ; Returns (mv nil nil) if it does not, (mv T proof-path) if it does
 (mutual-recursion
@@ -473,14 +497,17 @@
                 (mv nil nil))))))
 
 (defun prove-tree-base (output-file assumptions rules to-prove depth)
+;  (prog2$ (my-cw output-file "Searching down one more level...~%") ; Uncomment and add a match parentheses if you want to see progress with search
   (let ((processed-tree (prove-tree output-file assumptions rules to-prove depth)))
-    (mv-let (success result)
-            (contains-proof processed-tree)
-            (if success
-              (mv success result)
-              (if (< depth 1)
-                (mv nil nil)
-                (prove-tree-base output-file assumptions rules processed-tree (- depth 1)))))))
+    (if (null processed-tree)
+      (mv nil nil)
+      (mv-let (success result)
+              (contains-proof processed-tree)
+                (if success
+                  (mv success result)
+                  (if (< depth 1)
+                    (mv nil nil)
+                    (prove-tree-base output-file assumptions rules processed-tree (- depth 1))))))))
 
 ; Given a list of assumption names, construct a list of assumptions
 (defun pull-assumptions (output-file names assumptions)
