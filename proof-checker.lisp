@@ -98,15 +98,13 @@
              (cond (a (cdr a))
                    (t (list form)))))
           ((fquotep form) (list form))
-          (t (cons
-               (ffn-symb form)
-               (my-sublis-var-lst (fargs form) alist))))))
+          (t (list (cons (ffn-symb form) (my-sublis-var-lst (fargs form) alist)))))))
 
 ; Also inserts toprove clauses
 (defun sub-all-terms (subst-into subs)
   (if (null subst-into)
     nil
-    (cons (list 'toprove (my-sublis-var (first subst-into) subs)) (sub-all-terms (rest subst-into) subs))))
+    (cons (cons 'toprove (my-sublis-var (first subst-into) subs)) (sub-all-terms (rest subst-into) subs))))
 
 (defun sub-all (subst-into subs-list)
   (if (null subs-list)

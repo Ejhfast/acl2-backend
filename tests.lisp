@@ -435,6 +435,37 @@
     (my-cw (output-file) "Running prove13-auto2...~%")
     (proof-check (output-file) (assumptions13) (rules13) (proof13-auto) nil nil 100000)))
 
+(defun rules14 ()
+  '((=refl (= x x))
+    (=rep (implies (= y z) (= (+ x y) (+ x z))))
+    (+comm (implies (= x (+ y z)) (= x (+ z y))))
+    (=symm (implies (= y z) (= z y)))
+    (=trans (implies (and (= x y) (= y z)) (= x z)))))
+(defun assumptions14 ()
+  '((1+2 (= (+ 1 2) 3))
+    (3+3 (= (+ 3 3) 6))))
+(defun proof14 ()
+  '((1 (= (+ 1 2) (+ 1 2)) =refl nil nil)
+    (2 (= (+ (+ 1 2) (+ 1 2)) (+ (+ 1 2) 3)) =rep nil nil)
+    (3 (= (+ (+ 1 2) (+ 1 2)) (+ 3 (+ 1 2))) +comm nil nil)
+    (4 (= (+ 3 (+ 1 2)) (+ 3 3)) =rep nil nil)
+    (5 (= (+ 3 (+ 1 2)) 6) =trans nil nil)
+    (6 (= (+ (+ 1 2) (+ 1 2)) 6) =trans nil nil)))
+(defun prove14 ()
+  (prog2$
+    (my-cw (output-file) "Running prove14...~%")
+    (proof-check (output-file) (assumptions14) (rules14) (proof14) nil nil 0)))
+
+(defun proof14-auto ()
+  '((2b (= (+ (+ 1 2) (+ 1 2)) (+ 3 (+ 1 2))) nil nil nil)
+    (2c (= (+ 3 (+ 1 2)) (+ 3 3)) nil nil nil)
+    (3 (= (+ (+ 1 2) (+ 1 2)) (+ 3 3)) nil nil nil)
+    (4 (= (+ (+ 1 2) (+ 1 2)) 6) nil nil nil)))
+(defun prove14-auto ()
+  (prog2$
+    (my-cw (output-file) "Running prove14-auto...~%")
+    (proof-check (output-file) (assumptions14) (rules14) (proof14-auto) nil nil 1)))
+
 ;;;;;;;;;;;;;;;;;;
 ;;; BAD PROOFS ;;;
 ;;;;;;;;;;;;;;;;;;
@@ -668,6 +699,8 @@
         ((not (prove13)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 13 failed.~%") nil))
         ((not (prove13-auto)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 13 with step skipping failed.~%") nil))
         ((not (prove13-auto2)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 13 with step skipping and large search depth failed.~%") nil))
+        ((not (prove14)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 14 failed.~%") nil))
+        ((not (prove14-auto)) (prog2$ (my-cw (output-file) "~%ERROR: Proof 14 with step skipping failed.~%") nil))
         (T (prog2$ (my-cw (output-file) "~%SUCCESS: All good tests passed.~%") T))))
 
 ; Run all bad tests

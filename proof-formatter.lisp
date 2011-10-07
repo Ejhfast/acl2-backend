@@ -132,7 +132,7 @@
            nil))
         (T
           (let  ((formatted-assumption (mark-constants-assumption (first x) constants)))
-           (if (not (pseudo-termp formatted-assumption))
+           (if (not (pseudo-termp (second formatted-assumption)))
              (prog2$
                (my-cw output-file "ERROR: Statement ~x0 of assumption ~x1 is not a well-formed expression.~%" (remove-quote (second formatted-assumption)) (remove-quote (first formatted-assumption)))
                nil)
