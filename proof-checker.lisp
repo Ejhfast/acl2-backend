@@ -102,10 +102,11 @@
                (ffn-symb form)
                (my-sublis-var-lst (fargs form) alist))))))
 
+; Also inserts toprove clauses
 (defun sub-all-terms (subst-into subs)
   (if (null subst-into)
     nil
-    (cons (my-sublis-var (first subst-into) subs) (sub-all-terms (rest subst-into) subs))))
+    (cons (list 'toprove (my-sublis-var (first subst-into) subs)) (sub-all-terms (rest subst-into) subs))))
 
 (defun sub-all (subst-into subs-list)
   (if (null subs-list)
@@ -414,11 +415,14 @@
                    (cons 'useforproof (cons rule-used expanded-list))))
                (my-cw output-file "ERROR: Invalid useforproof term detected: ~x0.~%" to-prove)))
             ((equal T prefix) to-prove) ; Completed proof on this branch, no further work needed
-            (T
-              (mv-let (success proof-details)
-                      (prove-stmt output-file assumptions rules to-prove nil nil depth)
-                      (declare (ignore success))
-                      proof-details)))))
+            ((equal 'toprove prefix)
+             (if (equal (len to-prove) 2)
+               (mv-let (success proof-details)
+                       (prove-stmt output-file assumptions rules (second to-prove) nil nil depth)
+                       (declare (ignore success))
+                       proof-details)
+               (my-cw output-file "ERROR: Invalid toprove clause detected: ~x0.~%" to-prove)))
+            (T (my-cw output-file "ERROR: Unrecognized branch ~x0~%" to-prove)))))
 
   (defun prove-tree-canprove (output-file assumptions rules to-prove-list depth)
     (if (null to-prove-list)
