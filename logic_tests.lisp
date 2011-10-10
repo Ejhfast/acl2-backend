@@ -116,7 +116,7 @@
 (defun prove_logic1_full ()
   (prog2$
     (my-cw (output-file) "RUNNING: prove_logic1_full...~%")
-    (proof-check (output-file) (assumptions_logic1) (fullproofrules) (proof_logic1_full) nil nil 0)))
+    (verify-proof (output-file) '(_and (_and P Q) (_or S C)) (assumptions_logic1) (fullproofrules) (proof_logic1_full) nil nil 0)))
 
 (defun proof_logic1_pp ()
   '((P01 (=> (~ R) (~ (_or W (~ S)))) nil nil nil)
@@ -152,7 +152,7 @@
 (defun prove_logic1_pp ()
   (prog2$
     (my-cw (output-file) "RUNNING: prove_logic1_pp...~%")
-    (proof-check (output-file) (assumptions_logic1) (pp_proofrules) (proof_logic1_pp) nil nil 0)))
+    (verify-proof (output-file) '(_and (_and P Q) (_or S C)) (assumptions_logic1) (pp_proofrules) (proof_logic1_pp) nil nil 0)))
 
 (defun assumptions_logic2 ()
   '((assumption1 (=> R N))
@@ -179,7 +179,7 @@
 (defun prove_logic2_full ()
   (prog2$
     (my-cw (output-file) "RUNNING: prove_logic2_full...~%")
-    (proof-check (output-file) (assumptions_logic2) (fullproofrules) (proof_logic2_full) nil nil 0)))
+    (verify-proof (output-file) '(=> (~ B) (~ Q)) (assumptions_logic2) (fullproofrules) (proof_logic2_full) nil nil 0)))
 
 (defun proof_logic2_pp ()
   '((P01 (=> (~ N) (~ R)) nil nil nil)
@@ -201,7 +201,7 @@
 (defun prove_logic2_pp ()
   (prog2$
     (my-cw (output-file) "RUNNING: prove_logic2_pp...~%")
-    (proof-check (output-file) (assumptions_logic2) (pp_proofrules) (proof_logic2_pp) nil nil 0)))
+    (verify-proof (output-file) '(=> (~ B) (~ Q)) (assumptions_logic2) (pp_proofrules) (proof_logic2_pp) nil nil 0)))
 
 (defun runalltests ()
   (cond ((not (prove_logic1_full)) (my-cw (output-file) "~%ERROR: Proof 1 with full rule set failed.~%"))
