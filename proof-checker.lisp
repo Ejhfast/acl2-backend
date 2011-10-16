@@ -540,8 +540,6 @@
          ; If assumptions are required or if the user has provided assumptions, pull them from the pool of assumptions
          (assumptions (if (or (member 'a required) (not (null user-assump))) (pull-assumptions output-file user-assump assumptions) assumptions)))
     (cond ((and (member 'a required) (not (equal (len user-assump) (len assumptions)))) nil) ; Fail if assumptions provided by user are invalid
-          ((and (null rule-list) (member 'r required)) (my-cw output-file "ERROR (step ~x0): No rule was named, but you are required to name rules.~%" step-name))
-          ((and (not (equal 1 (len rule-list))) (member 'r required)) (my-cw output-file "ERROR (step ~x0): Listed multiple rules, but you are required to name the exact rule used.~%" step-name))
           ((null rule-list) ; If no rule is specified, attempt to prove conclusion using any of the rules in the problem
            (mv-let (success proof-details)
                    (prove-stmt output-file assumptions rules step-concl given-subs required depth)
@@ -595,7 +593,7 @@
           (fmt-rules (prepare-rules output-file rules constants)))
       (if (not (verify-rulesets output-file rules rulesets))
         nil
-        (let ((fmt-proof (prepare-proof output-file proof rules rulesets constants))
+        (let ((fmt-proof (prepare-proof output-file proof assumptions rules rulesets constants required))
               (fmt-required (prepare-required output-file required)))
           (cond ((and (null fmt-assumptions) assumptions)
                  (my-cw output-file "ERROR: Assumptions could not be validated.~%"))

@@ -320,7 +320,7 @@
         (let ((converted (cdr (assoc-eq (first rule-list) ruleset))))
           (if (null converted)
             (my-cw output-file "ERROR: Rule ~x0 is used in proof but undefined.~%" (first rule-list))
-            (cons (cdr (assoc-eq (first rule-list) ruleset)) (convert-rules output-file (rest rule-list) rules ruleset)))))
+            (append (cdr (assoc-eq (first rule-list) ruleset)) (convert-rules output-file (rest rule-list) rules ruleset)))))
       (convert-rules output-file (list rule-list) rules ruleset))))
 
 ; Checks that the proof steps are of the correct form (name concl rule-name assoc-list assumptions-used)
@@ -333,7 +333,7 @@
 ; 6. assoc-list should have proper mappings.
 ; 7. assumptions-used should be a list of atoms.
 ; 8. Other checks during formatting should all succeed.
-(defun prepare-proof-sub (output-file x rules rulesets constants)
+(defun prepare-proof-sub (output-file x assumptions rules rulesets constants required)
   (cond ((null x) nil)
         ((not (true-listp (first x)))
          (prog2$
@@ -359,23 +359,27 @@
                      nil))
                   ((not (check-atoms output-file (fifth (first x))))
                    (my-cw output-file "ERROR: ~x0 is not a valid list of assumptions in proof step ~x1.~%" (fifth (first x)) (first (first x))))
+                  ((set-difference-eq (fifth (first x)) (strip-cars assumptions))
+                   (my-cw output-file "ERROR: Step ~x0 uses undefined assumption(s) ~x1.~%" (first (first x)) (set-difference-eq (fifth (first x)) (strip-cars assumptions))))
                   (T
                     (let ((fmt-alist (prepare-alist output-file (fourth (first x)) constants)))
                       (if (and (null fmt-alist) (fourth (first x)))
                         nil ; There was a problem with the association list.
-                        (let ((fmt-rules (convert-rules output-file (third (first x)) rules rulesets)))
-                          (if (and (null fmt-rules) (third (first x)))
-                            nil
-                            (let ((formatted-pfstep (list (first (first x)) fmt-concl fmt-rules fmt-alist (fifth (first x))))
-                                  (formatted-remainder (prepare-proof-sub output-file (rest x) rules rulesets constants)))
-                              (if (and (null formatted-remainder) (rest x))
-                                nil ; Failure occurred in a later rule
-                                (cons formatted-pfstep formatted-remainder)))))))))))))
+                        (if (and (member 'r required) (listp (third (first x))) (not (equal 1 (len (third (first x))))))
+                          (my-cw output-file "ERROR: Step ~x0 must list exactly one rule or ruleset.~%" (first (first x)) (third (first x)))
+                          (let ((fmt-rules (convert-rules output-file (third (first x)) rules rulesets)))
+                            (if (and (null fmt-rules) (third (first x)))
+                              nil
+                              (let ((formatted-pfstep (list (first (first x)) fmt-concl fmt-rules fmt-alist (fifth (first x))))
+                                    (formatted-remainder (prepare-proof-sub output-file (rest x) (append assumptions (list (first x))) rules rulesets constants required)))
+                                (if (and (null formatted-remainder) (rest x))
+                                  nil ; Failure occurred in a later rule
+                                  (cons formatted-pfstep formatted-remainder))))))))))))))
 
 ; Formats and checks the proof.
-(defun prepare-proof (output-file x rules rulesets constants)
+(defun prepare-proof (output-file x assumptions rules rulesets constants required)
   (if (true-listp x)
-    (prepare-proof-sub output-file x rules rulesets constants)
+    (prepare-proof-sub output-file x assumptions rules rulesets constants required)
     (prog2$
       (my-cw output-file "ERROR: Proof is not in a valid format: ~x0~%" (remove-quote x))
       nil)))
