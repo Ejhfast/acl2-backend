@@ -266,6 +266,63 @@
             ((check-alist-vals output-file fmt-alist) fmt-alist)
             (T nil)))))
 
+(defun check-rulesets (output-file rules rulesets)
+  (if (null rulesets)
+    (mv T nil)
+    (cond ((not (listp (first rulesets)))
+           (prog2$
+             (my-cw output-file "ERROR: Invalid format for ruleset: ~x0.~%" (first rulesets))
+             (mv nil nil)))
+          ((< (len (first rulesets)) 2)
+           (prog2$
+             (my-cw output-file "ERROR: Ruleset is missing ruleset name or rules: ~x0.~%" (first rulesets))
+             (mv nil nil)))
+          ((not (atom (first (first rulesets))))
+           (prog2$
+             (my-cw output-file "ERROR: Invalid ruleset name: ~x0.~%" (first (first rulesets)))
+             (mv nil nil)))
+          (T
+            (let ((diff (set-difference-eq (cdr (first rulesets)) (strip-cars rules))))
+              (if diff
+                (prog2$
+                  (my-cw output-file "ERROR: Ruleset ~x0 contains undefined rule(s): ~x1.~%" (first (first rulesets)) diff)
+                  (mv nil nil))
+                (mv-let (verified rules-in-sets)
+                        (check-rulesets output-file rules (rest rulesets))
+                        (if verified
+                          (mv T (append (cdr (first rulesets)) rules-in-sets))
+                          (mv nil nil)))))))))
+
+(defun verify-rulesets (output-file rules rulesets)
+  (if (not (listp rulesets))
+    (my-cw output-file "ERROR: Invalid format for rulesets list: ~x0.~%" rulesets)
+    (mv-let (verified rule-names)
+            (check-rulesets output-file rules rulesets)
+            (if (not verified)
+              nil
+              (if (no-duplicatesp rule-names)
+                T
+                (my-cw output-file "ERROR: Rules cannot be listed in multiple rulesets.~%")))))) ; TODO List which name(s) are duplicated
+
+(defun rule-to-ruleset (rule ruleset)
+  (if (null ruleset)
+    rule
+    (if (member-eq rule (first ruleset))
+      (first (first ruleset))
+      (rule-to-ruleset rule (rest ruleset)))))
+
+(defun convert-rules (output-file rule-list rules ruleset)
+  (if (null rule-list)
+    nil
+    (if (listp rule-list)
+      (if (member-eq (first rule-list) (strip-cars rules))
+        (cons (first rule-list) (convert-rules output-file (rest rule-list) rules ruleset))
+        (let ((converted (cdr (assoc-eq (first rule-list) ruleset))))
+          (if (null converted)
+            (my-cw output-file "ERROR: Rule ~x0 is used in proof but undefined.~%" (first rule-list))
+            (cons (cdr (assoc-eq (first rule-list) ruleset)) (convert-rules output-file (rest rule-list) rules ruleset)))))
+      (convert-rules output-file (list rule-list) rules ruleset))))
+
 ; Checks that the proof steps are of the correct form (name concl rule-name assoc-list assumptions-used)
 ; Returns properly formatted proof steps, or nil if there is an error. For each step:
 ; 1. Should be true lists.
@@ -276,7 +333,7 @@
 ; 6. assoc-list should have proper mappings.
 ; 7. assumptions-used should be a list of atoms.
 ; 8. Other checks during formatting should all succeed.
-(defun prepare-proof-sub (output-file x constants)
+(defun prepare-proof-sub (output-file x rules rulesets constants)
   (cond ((null x) nil)
         ((not (true-listp (first x)))
          (prog2$
@@ -296,10 +353,6 @@
                    (prog2$
                      (my-cw output-file "ERROR: Conclusion ~x0 of proof step ~x1 is not a well-formed expression.~%" (remove-quote fmt-concl) (remove-quote (first (first x))))
                      nil))
-                  ((not (atom (third (first x))))
-                   (prog2$
-                     (my-cw output-file "ERROR: ~x0 is not a valid rule name in proof step ~x1.~%" (remove-quote (third (first x))) (remove-quote (first (first x))))
-                     nil))
                   ((not (alistp (fourth (first x))))
                    (prog2$
                      (my-cw output-file "ERROR: ~x0 is not a valid association list in proof step ~x1.~%" (remove-quote (fourth (first x))) (remove-quote (first (first x))))
@@ -310,16 +363,19 @@
                     (let ((fmt-alist (prepare-alist output-file (fourth (first x)) constants)))
                       (if (and (null fmt-alist) (fourth (first x)))
                         nil ; There was a problem with the association list.
-                        (let ((formatted-pfstep (list (first (first x)) fmt-concl (third (first x)) fmt-alist (fifth (first x))))
-                              (formatted-remainder (prepare-proof-sub output-file (rest x) constants)))
-                          (if (and (null formatted-remainder) (rest x))
-                            nil ; Failure occurred in a later rule
-                            (cons formatted-pfstep formatted-remainder)))))))))))
+                        (let ((fmt-rules (convert-rules output-file (third (first x)) rules rulesets)))
+                          (if (and (null fmt-rules) (third (first x)))
+                            nil
+                            (let ((formatted-pfstep (list (first (first x)) fmt-concl fmt-rules fmt-alist (fifth (first x))))
+                                  (formatted-remainder (prepare-proof-sub output-file (rest x) rules rulesets constants)))
+                              (if (and (null formatted-remainder) (rest x))
+                                nil ; Failure occurred in a later rule
+                                (cons formatted-pfstep formatted-remainder)))))))))))))
 
 ; Formats and checks the proof.
-(defun prepare-proof (output-file x constants)
+(defun prepare-proof (output-file x rules rulesets constants)
   (if (true-listp x)
-    (prepare-proof-sub output-file x constants)
+    (prepare-proof-sub output-file x rules rulesets constants)
     (prog2$
       (my-cw output-file "ERROR: Proof is not in a valid format: ~x0~%" (remove-quote x))
       nil)))

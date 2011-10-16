@@ -7,6 +7,12 @@
 ;;; HELPER FUNCTIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
+; Returns list of elements associated with list of keys
+(defun get-rules (rule-list rules)
+  (if (null rule-list)
+    nil
+    (cons (assoc-equal (first rule-list) rules) (get-rules (rest rule-list) rules))))
+
 ; Returns true if the list is a list of assumptions
 (defun list-of-assumptions (lst)
   (if (null lst)
@@ -146,32 +152,35 @@
     (cons (remove-quote (second (first proof-path))) (extract-stmts (rest proof-path)))))
 
 (mutual-recursion
-  (defun display-proof-step (output-file proof-path)
+  (defun display-proof-step (output-file proof-path rulesets)
     (if (= (len proof-path) 2)
       nil ; Of the form (T ASSUMPTION), for which no printing needs to be done
       (let ((stmt (second proof-path))
             (rule-used (third proof-path))
             (assumptions (cdddr proof-path)))
         (prog2$
-          (display-proof-step-list output-file assumptions)
-          (my-cw output-file "Successfully proved ~x0 using rule ~x1 and assumptions ~x2.~%" (remove-quote stmt) rule-used (extract-stmts assumptions))))))
+          (display-proof-step-list output-file assumptions rulesets)
+          (let ((ruleset-name (rule-to-ruleset rule-used rulesets)))
+            (if (equal ruleset-name rule-used)
+              (my-cw output-file "Successfully proved ~x0 using rule ~x1 and assumptions ~x2.~%" (remove-quote stmt) rule-used (extract-stmts assumptions))
+              (my-cw output-file "Successfully proved ~x0 using ruleset ~x1 and assumptions ~x2.~%" (remove-quote stmt) ruleset-name (extract-stmts assumptions))))))))
   
-  (defun display-proof-step-list (output-file proof-path-list)
+  (defun display-proof-step-list (output-file proof-path-list rulesets)
     (if (null proof-path-list)
       nil
       (prog2$
         (if (not (atom (first proof-path-list)))
-          (display-proof-step output-file (first proof-path-list))
+          (display-proof-step output-file (first proof-path-list) rulesets)
           nil)
-        (display-proof-step-list output-file (rest proof-path-list))))))
+        (display-proof-step-list output-file (rest proof-path-list) rulesets)))))
 
-(defun report-success-base (output-file step-name proof-path)
+(defun report-success-base (output-file step-name proof-path rulesets)
   (prog2$
     (prog2$
       (if (list-of-assumptions (cdddr proof-path))
         (my-cw output-file "Step ~x0: " step-name)
         (my-cw output-file "Step ~x0: Proved in multiple steps:~%" step-name))
-      (display-proof-step output-file proof-path))
+      (display-proof-step output-file proof-path rulesets))
     T))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -522,39 +531,40 @@
         (my-cw output-file "Could not find assumption ~x0, aborting.~%" (first names))
         (cons found (pull-assumptions output-file (rest names) assumptions))))))
 
-(defun check-step (output-file assumptions rules step required depth)
+(defun check-step (output-file assumptions rules rulesets step required depth)
   (let* ((step-name (first step))
          (step-concl (second step))
-         (rule (third step))
+         (rule-list (third step))
          (given-subs (fourth step))
          (user-assump (fifth step))
          ; If assumptions are required or if the user has provided assumptions, pull them from the pool of assumptions
          (assumptions (if (or (member 'a required) (not (null user-assump))) (pull-assumptions output-file user-assump assumptions) assumptions)))
     (cond ((and (member 'a required) (not (equal (len user-assump) (len assumptions)))) nil) ; Fail if assumptions provided by user are invalid
-          ((and (null rule) (member 'r required)) (my-cw output-file "ERROR (step ~x0): No rule was named, but you are required to name rules.~%" step-name))
-          ((null rule) ; If no rule is specified, attempt to prove conclusion using any of the rules in the problem
+          ((and (null rule-list) (member 'r required)) (my-cw output-file "ERROR (step ~x0): No rule was named, but you are required to name rules.~%" step-name))
+          ((and (not (equal 1 (len rule-list))) (member 'r required)) (my-cw output-file "ERROR (step ~x0): Listed multiple rules, but you are required to name the exact rule used.~%" step-name))
+          ((null rule-list) ; If no rule is specified, attempt to prove conclusion using any of the rules in the problem
            (mv-let (success proof-details)
                    (prove-stmt output-file assumptions rules step-concl given-subs required depth)
                    (if success
-                     (report-success-base output-file step-name proof-details)
+                     (report-success-base output-file step-name proof-details rulesets)
                      (if (or (null proof-details) (< depth 1))
                        (my-cw output-file "ERROR (step ~x0): Failed to prove conclusion ~x1 using any rule.~%" step-name (remove-quote step-concl))
                        (mv-let (success prove-tree-details)
                                (prove-tree-base output-file assumptions rules proof-details (- depth 1))
                                (if success
-                                 (report-success-base output-file step-name prove-tree-details)
+                                 (report-success-base output-file step-name prove-tree-details rulesets)
                                  (my-cw output-file "ERROR (step ~x0): Failed to prove conclusion ~x1 using any rule. Recursive search to depth ~x2 using rules without free variables also failed.~%" step-name (remove-quote step-concl) depth)))))))
           (T
-            (let ((rule-info (assoc-equal rule rules)))
+            (let ((rule-info (get-rules rule-list rules)))
               (if (null rule-info)
-                (my-cw output-file "ERROR (step ~x0): Rule ~x1 not found.~%" step-name rule)
+                nil
                 ; Attempt to prove conclusion using the specified rule
                 (mv-let (success proof-details)
-                        (prove-stmt output-file assumptions (list rule-info) step-concl given-subs required depth)
+                        (prove-stmt output-file assumptions rule-info step-concl given-subs required depth)
                         (if success
-                          (report-success-base output-file step-name proof-details)
+                          (report-success-base output-file step-name proof-details rulesets)
                           (prog2$
-                            (my-cw output-file "ERROR (step ~x0): Failed to prove conclusion ~x1 using rule ~x2" step-name (remove-quote step-concl) rule)
+                            (my-cw output-file "ERROR (step ~x0): Failed to prove conclusion ~x1 using the specified rule(s)" step-name (remove-quote step-concl))
                             (prog2$
                                 (if (not (null given-subs))
                                   (my-cw output-file ", subs ~x0" given-subs)
@@ -566,48 +576,50 @@
                                   (my-cw output-file ".~%"))))))))))))
 
 ; Recursively check the entire proof
-(defun check-proof (output-file assumptions rules proof required depth)
+(defun check-proof (output-file assumptions rules rulesets proof required depth)
   (if (null proof)
     T
-    (and (check-step output-file assumptions rules (first proof) required depth)
-         (check-proof output-file (cons (list (first (first proof)) (second (first proof))) assumptions) rules (rest proof) required depth))))
+    (and (check-step output-file assumptions rules rulesets (first proof) required depth)
+         (check-proof output-file (cons (list (first (first proof)) (second (first proof))) assumptions) rules rulesets (rest proof) required depth))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TOP-LEVEL FUNCTION ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun proof-check (output-file assumptions rules proof constants required depth)
+(defun proof-check (output-file assumptions rules rulesets proof constants required depth)
   (if (not (check-atoms output-file constants))
     (prog2$
       (my-cw output-file "ERROR: Invalid constants list.~%")
       nil)
     (let ((fmt-assumptions (prepare-assumptions output-file assumptions constants))
-          (fmt-rules (prepare-rules output-file rules constants))
-          (fmt-proof (prepare-proof output-file proof constants))
-          (fmt-required (prepare-required output-file required)))
-      (cond ((and (null fmt-assumptions) assumptions)
-             (my-cw output-file "ERROR: Assumptions could not be validated.~%"))
-            ((and (null fmt-rules) rules)
-             (my-cw output-file "ERROR: Rules could not be validated.~%"))
-            ((and (null fmt-proof) proof)
-             (my-cw output-file "ERROR: Proof could not be validated.~%"))
-            ((and (null fmt-required) required)
-             (my-cw output-file "ERROR: Required elements could not be validated.~%"))
-            ((not (check-mappings output-file (append fmt-assumptions fmt-rules fmt-proof)))
-             (my-cw output-file "ERROR: Validation failed.~%"))
-            ((and (not (null required)) (> depth 0))
-             (my-cw output-file "ERROR: Requirements list is non-empty, but search depth is non-zero.~%"))
-            ((< depth 0)
-             (my-cw output-file "ERROR: Invalid search depth specified.~%"))
-            (T (check-proof output-file fmt-assumptions fmt-rules fmt-proof fmt-required depth))))))
+          (fmt-rules (prepare-rules output-file rules constants)))
+      (if (not (verify-rulesets output-file rules rulesets))
+        nil
+        (let ((fmt-proof (prepare-proof output-file proof rules rulesets constants))
+              (fmt-required (prepare-required output-file required)))
+          (cond ((and (null fmt-assumptions) assumptions)
+                 (my-cw output-file "ERROR: Assumptions could not be validated.~%"))
+                ((and (null fmt-rules) rules)
+                 (my-cw output-file "ERROR: Rules could not be validated.~%"))
+                ((and (null fmt-proof) proof)
+                 (my-cw output-file "ERROR: Proof could not be validated.~%"))
+                ((and (null fmt-required) required)
+                 (my-cw output-file "ERROR: Required elements could not be validated.~%"))
+                ((not (check-mappings output-file (append fmt-assumptions fmt-rules fmt-proof rulesets)))
+                 (my-cw output-file "ERROR: Validation failed.~%"))
+                ((and (not (null required)) (> depth 0))
+                 (my-cw output-file "ERROR: Requirements list is non-empty, but search depth is non-zero.~%"))
+                ((< depth 0)
+                 (my-cw output-file "ERROR: Invalid search depth specified.~%"))
+                (T (check-proof output-file fmt-assumptions fmt-rules rulesets fmt-proof fmt-required depth))))))))
 
 (defun extract-second (list-of-lists)
   (if (null list-of-lists)
     nil
     (cons (second (first list-of-lists)) (extract-second (rest list-of-lists)))))
 
-(defun verify-proof (output-file goal assumptions rules proof constants required depth)
-  (let ((result (proof-check output-file assumptions rules proof constants required depth)))
+(defun verify-proof (output-file goal assumptions rules rulesets proof constants required depth)
+  (let ((result (proof-check output-file assumptions rules rulesets proof constants required depth)))
     (if result
       ; Check if goal has been reached
       (if (member-equal goal (extract-second proof))
